@@ -2,6 +2,7 @@
 
 namespace Idoneo\HumanoBilling;
 
+use Idoneo\HumanoBilling\Models\SystemModule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Spatie\LaravelPackageTools\Package;
@@ -32,6 +33,17 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
             if (Schema::hasTable('modules')) {
                 if (class_exists(\App\Models\Module::class)) {
                     \App\Models\Module::updateOrCreate(
+                        ['key' => 'billing'],
+                        [
+                            'name' => 'Billing',
+                            'icon' => 'ti ti-receipt-2',
+                            'description' => 'Invoices, payments and payment methods',
+                            'is_core' => false,
+                            'status' => 1,
+                        ]
+                    );
+                } else {
+                    SystemModule::query()->updateOrCreate(
                         ['key' => 'billing'],
                         [
                             'name' => 'Billing',
