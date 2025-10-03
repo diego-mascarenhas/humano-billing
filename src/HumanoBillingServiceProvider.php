@@ -17,7 +17,11 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
             ->name('humano-billing')
             ->hasConfigFile()
             ->hasViews()
-            ->hasRoute('web');
+            ->hasRoute('web')
+            ->hasMigrations([
+                '2024_03_01_000000_create_payment_types_table',
+                '2024_03_01_000001_create_invoice_types_table',
+            ]);
     }
 
     public function bootingPackage()

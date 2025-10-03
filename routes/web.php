@@ -4,10 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->group(function ()
 {
-    Route::get('/invoices', function ()
-    {
-        return view('humano-billing::invoices.index');
-    })->name('invoices.index');
+    Route::get('/invoices', [\Idoneo\HumanoBilling\Http\Controllers\InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/data', [\Idoneo\HumanoBilling\Http\Controllers\InvoiceController::class, 'data'])->name('invoices.data');
 
     // Legacy aliases
     Route::prefix('invoice')->group(function ()
@@ -19,10 +17,8 @@ Route::middleware(['web', 'auth'])->group(function ()
     });
 
     // Payments placeholder + legacy alias
-    Route::get('/payments', function ()
-    {
-        return view('humano-billing::payments.index');
-    })->name('payments.index');
+    Route::get('/payments', [\Idoneo\HumanoBilling\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/data', [\Idoneo\HumanoBilling\Http\Controllers\PaymentController::class, 'data'])->name('payments.data');
 
     Route::prefix('payment')->group(function ()
     {
