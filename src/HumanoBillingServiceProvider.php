@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Idoneo\HumanoBilling\Database\Seeders\PaymentTypeSeeder;
+use Idoneo\HumanoBilling\Database\Seeders\InvoiceTypeSeeder;
 
 class HumanoBillingServiceProvider extends PackageServiceProvider
 {
@@ -39,6 +41,18 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
             }
         } catch (\Throwable $e) {
             Log::debug('HumanoBilling: bootstrap note: ' . $e->getMessage());
+        }
+
+        // Seed defaults if tables exist (idempotent)
+        try {
+            if (Schema::hasTable('payment_types')) {
+                (new PaymentTypeSeeder())->run();
+            }
+            if (Schema::hasTable('invoice_types')) {
+                (new InvoiceTypeSeeder())->run();
+            }
+        } catch (\Throwable $e) {
+            // ignore seeding errors on boot
         }
     }
 }
