@@ -25,39 +25,16 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
             ]);
     }
 
+    /**
+     * Note: Billing is NOT registered as a module because it's a group category.
+     * Individual modules like 'invoices', 'payments', 'accounting', 'financial', 'earnings', 'expenses'
+     * are defined in ModuleSeeder under the 'billing' group.
+     */
     public function bootingPackage()
     {
         parent::bootingPackage();
 
-        try {
-            if (Schema::hasTable('modules')) {
-                if (class_exists(\App\Models\Module::class)) {
-                    \App\Models\Module::updateOrCreate(
-                        ['key' => 'billing'],
-                        [
-                            'name' => 'Billing',
-                            'icon' => 'ti ti-receipt-2',
-                            'description' => 'Invoices, payments and payment methods',
-                            'is_core' => false,
-                            'status' => 1,
-                        ]
-                    );
-                } else {
-                    SystemModule::query()->updateOrCreate(
-                        ['key' => 'billing'],
-                        [
-                            'name' => 'Billing',
-                            'icon' => 'ti ti-receipt-2',
-                            'description' => 'Invoices, payments and payment methods',
-                            'is_core' => false,
-                            'status' => 1,
-                        ]
-                    );
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::debug('HumanoBilling: bootstrap note: ' . $e->getMessage());
-        }
+        // Module registration removed - 'billing' is a group, not an individual module
 
         // Seed defaults if tables exist (idempotent)
         try {
@@ -69,6 +46,37 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
             }
         } catch (\Throwable $e) {
             // ignore seeding errors on boot
+        }
+
+        // Ensure billing-related permissions exist and are granted to admin
+        try {
+            if (Schema::hasTable('permissions') && class_exists(\Spatie\Permission\Models\Permission::class)) {
+                $billingPermissions = [
+                    // invoices
+                    'invoice.index','invoice.list','invoice.create','invoice.show','invoice.edit','invoice.store','invoice.update','invoice.destroy',
+                    // payments
+                    'payment.index','payment.list','payment.create','payment.show','payment.edit','payment.store','payment.update','payment.destroy',
+                    // accounting
+                    'accounting.index','accounting.list','accounting.create','accounting.show','accounting.edit','accounting.store','accounting.update','accounting.destroy',
+                ];
+
+                foreach ($billingPermissions as $permission) {
+                    \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $permission]);
+                }
+
+                // Grant to admin role if exists
+                if (class_exists(\Spatie\Permission\Models\Role::class)) {
+                    $adminRole = \Spatie\Permission\Models\Role::where('name', 'admin')->first();
+                    if ($adminRole) {
+                        $created = \Spatie\Permission\Models\Permission::whereIn('name', $billingPermissions)->get();
+                        if ($created->isNotEmpty()) {
+                            $adminRole->givePermissionTo($created);
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::debug('HumanoBilling: permissions setup skipped: ' . $e->getMessage());
         }
     }
 }
