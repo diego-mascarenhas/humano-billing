@@ -20,8 +20,11 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
             ->hasViews()
             ->hasRoute('web')
             ->hasMigrations([
-                '2024_03_01_000000_create_payment_types_table',
-                '2024_03_01_000001_create_invoice_types_table',
+                // Note: payment_types and invoice_types are in core migrations
+                '2024_06_01_600000_create_invoices_table',
+                '2024_06_01_650000_create_invoice_items_table',
+                '2024_06_01_700000_create_invoice_downloads_table',
+                '2024_06_01_800000_create_payments_table',
             ]);
     }
 

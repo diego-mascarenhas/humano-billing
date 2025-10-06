@@ -152,7 +152,7 @@ class AccountingController extends Controller
 		} catch (\Exception $e)
 		{
 			\Log::error('Error fetching Stripe invoices: '.$e->getMessage());
-			session()->flash('error', 'Error al cargar datos de Stripe: '.$e->getMessage());
+			session()->flash('error', 'Error loading Stripe data: '.$e->getMessage());
 		}
 
 		return view('humano-billing::accounting.index', compact('stripeData'));
@@ -168,7 +168,7 @@ class AccountingController extends Controller
 		if (! $team->getSetting('stripe_secret'))
 		{
 			return redirect()->route('accounting.index')
-				->with('error', 'API de Stripe no configurada');
+				->with('error', 'Stripe API not configured');
 		}
 
 		try
@@ -220,7 +220,7 @@ class AccountingController extends Controller
 			\Log::error('Error fetching Stripe invoice details: '.$e->getMessage());
 
 			return redirect()->route('accounting.index')
-				->with('error', 'Error al cargar detalles de la factura: '.$e->getMessage());
+				->with('error', 'Error loading invoice details: '.$e->getMessage());
 		}
 
 		return view('humano-billing::accounting.invoice', compact('invoiceData', 'enterprise'));
@@ -237,7 +237,7 @@ class AccountingController extends Controller
 		if (! $team->getSetting('stripe_secret'))
 		{
 			return redirect()->route('accounting.index')
-				->with('error', 'API de Stripe no configurada');
+				->with('error', 'Stripe API not configured');
 		}
 
 		try
@@ -253,7 +253,7 @@ class AccountingController extends Controller
 			if (empty($invoice->invoice_pdf))
 			{
 				return redirect()->route('accounting.invoice', $id)
-					->with('error', 'PDF no disponible para esta factura');
+					->with('error', 'PDF not available for this invoice');
 			}
 
 			// Get date information for the invoice
@@ -278,7 +278,7 @@ class AccountingController extends Controller
 			\Log::error('Error downloading invoice PDF: '.$e->getMessage());
 
 			return redirect()->route('accounting.invoice', $id)
-				->with('error', 'Error al descargar PDF: '.$e->getMessage());
+				->with('error', 'Error downloading PDF: '.$e->getMessage());
 		}
 	}
 
@@ -292,7 +292,7 @@ class AccountingController extends Controller
 		if (! $team->getSetting('stripe_secret'))
 		{
 			return redirect()->route('accounting.index')
-				->with('error', 'API de Stripe no configurada');
+				->with('error', 'Stripe API not configured');
 		}
 
 		// Find the enterprise
@@ -370,7 +370,7 @@ class AccountingController extends Controller
 		} catch (\Exception $e)
 		{
 			\Log::error('Error fetching customer invoices: '.$e->getMessage());
-			session()->flash('error', 'Error al cargar facturas del cliente: '.$e->getMessage());
+			session()->flash('error', 'Error loading customer invoices: '.$e->getMessage());
 		}
 
 		return view('humano-billing::accounting.customer', compact('stripeData', 'enterprise'));
@@ -451,14 +451,14 @@ class AccountingController extends Controller
 
 				if ($invoiceQuarter == $quarter && $invoiceYear == $year)
 				{
-					// Calcular valores
+					// Calculate values
 					$total = ($invoice->status === 'paid') ?
 						($invoice->amount_paid > 0 ? $invoice->amount_paid / 100 : $invoice->total / 100) :
 						($invoice->amount_due / 100);
 					$subtotal = $invoice->subtotal / 100;
 					$tax = 0;
 
-					// Calcular impuestos totales
+					// Calculate total taxes
 					if (! empty($invoice->total_tax_amounts))
 					{
 						foreach ($invoice->total_tax_amounts as $taxAmount)
@@ -467,13 +467,13 @@ class AccountingController extends Controller
 						}
 					}
 
-					// Traducir el estado
+					// Translate status
 					$status = match ($invoice->status)
 					{
-						'paid' => 'Pagado',
-						'open' => 'Pendiente',
-						'void' => 'Anulado',
-						'uncollectible' => 'Incobrable',
+						'paid' => 'Paid',
+						'open' => 'Open',
+						'void' => 'Void',
+						'uncollectible' => 'Uncollectible',
 						default => ucfirst($invoice->status)
 					};
 
@@ -509,15 +509,15 @@ class AccountingController extends Controller
 				$file = fopen('php://output', 'w');
 
 				// Add CSV headers
-				fputcsv($file, ['Número', 'Cliente', 'Email', 'Base Imponible', 'Impuestos', 'Total', 'Moneda', 'Estado', 'Fecha']);
+				fputcsv($file, ['Number', 'Customer', 'Email', 'Subtotal', 'Taxes', 'Total', 'Currency', 'Status', 'Date']);
 
-				// Separar facturas activas y anuladas/incobrables
+				// Separate active and void/uncollectible invoices
 				$activeInvoices = [];
 				$inactiveInvoices = [];
 
 				foreach ($quarterInvoices as $invoice)
 				{
-					if ($invoice['status'] === 'Anulado' || $invoice['status'] === 'Incobrable')
+					if ($invoice['status'] === 'Void' || $invoice['status'] === 'Uncollectible')
 					{
 						$inactiveInvoices[] = $invoice;
 					} else
@@ -526,7 +526,7 @@ class AccountingController extends Controller
 					}
 				}
 
-				// Agregar facturas activas
+				// Add active invoices
 				foreach ($activeInvoices as $invoice)
 				{
 					fputcsv($file, [
@@ -542,14 +542,14 @@ class AccountingController extends Controller
 					]);
 				}
 
-				// Agregar separador si hay facturas anuladas o incobrables
+				// Add separator if there are void or uncollectible invoices
 				if (! empty($inactiveInvoices))
 				{
 					fputcsv($file, ['', '', '', '', '', '', '', '', '']);
-					fputcsv($file, ['FACTURAS ANULADAS E INCOBRABLES', '', '', '', '', '', '', '', '']);
+					fputcsv($file, ['VOID AND UNCOLLECTIBLE INVOICES', '', '', '', '', '', '', '', '']);
 					fputcsv($file, ['', '', '', '', '', '', '', '', '']);
 
-					// Agregar facturas anuladas e incobrables
+					// Add void and uncollectible invoices
 					foreach ($inactiveInvoices as $invoice)
 					{
 						fputcsv($file, [

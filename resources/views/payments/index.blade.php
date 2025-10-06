@@ -11,24 +11,15 @@
 </div>
 
 <div class="card">
-    <div class="card-datatable table-responsive">
-        <table class="table" id="payments-table">
-            <thead>
-                <tr>
-                    <th>{{ __('Date') }}</th>
-                    <th>{{ __('Enterprise') }}</th>
-                    <th>{{ __('Invoice') }}</th>
-                    <th>{{ __('Type') }}</th>
-                    <th>{{ __('Amount') }}</th>
-                    <th>{{ __('Status') }}</th>
-                </tr>
-            </thead>
-        </table>
+    <div class="card-body">
+        {!! $dataTable->table(['class' => 'table']) !!}
     </div>
-    </div>
+</div>
+@endsection
 
 @section('vendor-style')
 <link rel="stylesheet" href="{{asset('assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css')}}" />
+<link rel="stylesheet" href="{{asset('assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css')}}" />
 @endsection
 
 @section('vendor-script')
@@ -36,42 +27,5 @@
 @endsection
 
 @section('page-script')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    if ($.fn.DataTable.isDataTable('#payments-table')) {
-        $('#payments-table').DataTable().destroy();
-    }
-    const isEs = '{{ app()->getLocale() }}' === 'es';
-    const dtLangEs = {
-        processing: "Procesando...",
-        zeroRecords: "No se encontraron registros",
-        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-        infoEmpty: "Mostrando 0 a 0 de 0 registros",
-        infoFiltered: "(filtrado de _MAX_ registros totales)",
-        search: "Buscar:",
-        paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" }
-    };
-    $('#payments-table').DataTable({
-        processing: true,
-        serverSide: false,
-        lengthChange: false,
-        ajax: {
-            url: '{{ route('payments.data') }}',
-            dataSrc: 'data'
-        },
-        language: isEs ? dtLangEs : undefined,
-        columns: [
-            { data: 'date' },
-            { data: 'enterprise_id' },
-            { data: 'invoice_id' },
-            { data: 'type_id' },
-            { data: 'amount' },
-            { data: 'status' }
-        ]
-    });
-});
-</script>
+{!! $dataTable->scripts() !!}
 @endsection
-@endsection
-
-
