@@ -2,13 +2,10 @@
 
 namespace Idoneo\HumanoBilling;
 
-use Idoneo\HumanoBilling\Models\SystemModule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Idoneo\HumanoBilling\Database\Seeders\PaymentTypeSeeder;
-use Idoneo\HumanoBilling\Database\Seeders\InvoiceTypeSeeder;
 
 class HumanoBillingServiceProvider extends PackageServiceProvider
 {
@@ -18,14 +15,8 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
             ->name('humano-billing')
             ->hasConfigFile()
             ->hasViews()
-            ->hasRoute('web')
-            ->hasMigrations([
-                // Note: payment_types and invoice_types are in core migrations
-                '2024_06_01_600000_create_invoices_table',
-                '2024_06_01_650000_create_invoice_items_table',
-                '2024_06_01_700000_create_invoice_downloads_table',
-                '2024_06_01_800000_create_payments_table',
-            ]);
+            ->hasRoute('web');
+        // Note: Invoices and payments migrations are now in the main application
     }
 
     /**
@@ -38,50 +29,44 @@ class HumanoBillingServiceProvider extends PackageServiceProvider
         parent::bootingPackage();
 
         // Module registration removed - 'billing' is a group, not an individual module
-
-        // Seed defaults if tables exist (idempotent)
-        try {
-            if (Schema::hasTable('payment_types')) {
-                (new PaymentTypeSeeder())->run();
-            }
-            if (Schema::hasTable('invoice_types')) {
-                (new InvoiceTypeSeeder())->run();
-            }
-        } catch (\Throwable $e) {
-            // ignore seeding errors on boot
-        }
+        // Seeders for payment_types and invoice_types are now in the main application
 
         // Ensure billing-related permissions exist and are granted to admin
-        try {
-            if (Schema::hasTable('permissions') && class_exists(\Spatie\Permission\Models\Permission::class)) {
+        try
+        {
+            if (Schema::hasTable('permissions') && class_exists(\Spatie\Permission\Models\Permission::class))
+            {
                 $billingPermissions = [
                     // invoices
-                    'invoice.index','invoice.list','invoice.create','invoice.show','invoice.edit','invoice.store','invoice.update','invoice.destroy',
+                    'invoice.index', 'invoice.list', 'invoice.create', 'invoice.show', 'invoice.edit', 'invoice.store', 'invoice.update', 'invoice.destroy',
                     // payments
-                    'payment.index','payment.list','payment.create','payment.show','payment.edit','payment.store','payment.update','payment.destroy',
+                    'payment.index', 'payment.list', 'payment.create', 'payment.show', 'payment.edit', 'payment.store', 'payment.update', 'payment.destroy',
                     // accounting
-                    'accounting.index','accounting.list','accounting.create','accounting.show','accounting.edit','accounting.store','accounting.update','accounting.destroy',
+                    'accounting.index', 'accounting.list', 'accounting.create', 'accounting.show', 'accounting.edit', 'accounting.store', 'accounting.update', 'accounting.destroy',
                 ];
 
-                foreach ($billingPermissions as $permission) {
+                foreach ($billingPermissions as $permission)
+                {
                     \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $permission]);
                 }
 
                 // Grant to admin role if exists
-                if (class_exists(\Spatie\Permission\Models\Role::class)) {
+                if (class_exists(\Spatie\Permission\Models\Role::class))
+                {
                     $adminRole = \Spatie\Permission\Models\Role::where('name', 'admin')->first();
-                    if ($adminRole) {
+                    if ($adminRole)
+                    {
                         $created = \Spatie\Permission\Models\Permission::whereIn('name', $billingPermissions)->get();
-                        if ($created->isNotEmpty()) {
+                        if ($created->isNotEmpty())
+                        {
                             $adminRole->givePermissionTo($created);
                         }
                     }
                 }
             }
-        } catch (\Throwable $e) {
-            Log::debug('HumanoBilling: permissions setup skipped: ' . $e->getMessage());
+        } catch (\Throwable $e)
+        {
+            Log::debug('HumanoBilling: permissions setup skipped: '.$e->getMessage());
         }
     }
 }
-
-
